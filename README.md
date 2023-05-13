@@ -65,7 +65,11 @@ Mount the boot partition of your SD:
 
 $ mount /dev/mmcblk0p1 /mnt
 
-Use scp to transfer the .rbf and .dtb files in this repo into /mnt. Additionally, use scp to transfer the software folder onto your FPGA's desktop. Reboot the board, make the C programs, and run ./hello.
+Use scp to transfer the .rbf and .dtb files in this repo into /mnt. Additionally, use scp to transfer the software folder onto your FPGA's desktop. Then sync:
+
+$ sync
+
+Reboot the board, make the C programs, and run ./hello.
 <br><br>
 
 ### Game Overview & Rules <a name="gameoverview"></a>
