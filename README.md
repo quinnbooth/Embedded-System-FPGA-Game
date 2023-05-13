@@ -34,15 +34,8 @@ Multiplayer tank game implemented on the DE1-SoC Cyclone V Board. Based on Battl
     - [Memory](#memory)
 - [Software](#software)
     - [Avalon Bus Interface](#bus)
-    - [User Input](#userinput)
-        - [Controls Overview](#controls)
-        - [Communication Protocol](#protocol)
+    - [Controllers](#control)
     - [Game Logic](#gamelogic)
-        - [Game Loop](#gameloop)
-        - [Tank Movement](#movement)
-        - [Collision Detection](#collision)
-        - [Bullet Firing](#bullet)
-        - [Win Condition](#win)
 - [References](#references)
 
 # Introduction <a name="introduction"></a>
@@ -106,3 +99,68 @@ The FPGA includes 4450 Kbits of embedded memory. The sprites and audio required 
   <br>
   <em>Figure 6: Memory Considerations.</em>
 </p>
+
+# Software <a name="software"></a>
+
+### Avalon Bus Interface <a name="bus"></a>
+
+Communication from the software to the hardware is done through the device driver. Ioctl16 writes of 16 bits are made to 10 different registers to send data information from the software for handling by the hardware graphics. The Avalon bus interface is specified below.
+
+There are a total of 10 2-byte registers that we use, performing writes of 16 bits to pass data from the software to the hardware. Address 00 is for data such as the stage num, player scores, explosion graphic, and various enable bits to turn on the respective graphics. Address 02 is the coordinates for the explosion and the selected map number. Addresses 04 and 06 are for player 1 tank information including the coordinates and direction, and addresses 08 and 10 are for the player 2 tank. Addresses 12 and 14 are for the player 1 bullet coordinates and enable, and addresses 16 and 18 for the player 2 bullet. 
+<br><br>
+<p align="center">
+  <img src="./media/bus_interface.png" alt="Bus Interface" width="550" height="260">
+  <br>
+  <em>Figure 7: Avalon Bus Interface.</em>
+</p>
+<br>
+
+### Controllers <a name="control"></a>
+
+Players interact with the game using a pair of iNNext game controllers, which can be seen below. The controllers are connected via USB and are identified by an idProduct of 17 and have just a single interface, using the libusb library. Players can move the tanks up/down/left/right using the arrow keys on the controllers, and fire a bullet using the A button. Counter variables were used for each of the arrow keys and A button to slow down the input speed and to in effect debounce the switches so that a single physical press was only registered as a single press of the button on the software side. Both of the controller inputs are handled in a single loop as threads were not necessary to maintain fast and simultaneous input latency.
+<br><br>
+<p align="center">
+  <img src="./media/controllers.png" alt="iNNext Controllers." width="200" height="190">
+  <br>
+  <em>Figure 8: iNNext Controllers.</em>
+</p>
+<br><br>
+With two connected controllers, we sequentially used libusb_interrupt_transfer from the libusb library to read their 7 byte protocol messages. Each controller communicates using the following 7 byte protocol:
+<br><br>
+
+|    Byte 0     |     Byte 1    |     Byte 2    |      Byte 3     |      Byte 4     |      Byte 5     | Byte 6 |
+|----------|----------|----------|------------|------------|------------|------------------------------|
+| Constant | Constant | Constant | L/R Arrows | U/D Arrows | X, Y, A, B | L/R Bumpers, Select, Start |
+
+There are three constant fields at the beginning of each controller packet, describing the protocol. Our controller is not identified by one of the libusb built in protocols, so it fills these fields with 255 in each. This corresponds to ‘protocol 0,’ whereas an identifiable protocol such as that of keyboards might be ‘protocol 1.’ For the left/right field, it defaults to a 127 integer, which changes to 0 if left is pressed, or 255 if right is pressed. The up/down field works the same way, dropping to 0 if up is pressed; 255 if down is pressed. The X, Y, A, B field has a more complex representation of button presses. It has an additive scheme, where pressing different keys adds to the integer total. The Left_Buffer, Right_Buffer, Start, Select field operates in the same way, simply replacing the X, Y, A, B keys.
+<br><br>
+
+### Game Logic <a name="gamelogic"></a>
+
+The userspace program to handle the game logic has three primary loops– 1) loop to restart the game, 2) loop to select the stage, 3) loop to play the game. Upon startup, the currently selected stage is displayed on the screen and the program listens for user input from controller 1. The stage number corresponds to which map will be selected, with there being 3 different playable maps. When the up arrow is pressed, the stage number increments and the player tanks displayed move in a little animation. The speed of the animation is dependent on the stage number selected and acts as an indication to the complexity of the selected map. When the down arrow is pressed, the stage number decrements. The user selects the current stage and starts the game by pressing the A button. Once the game starts, the players are free to move around the maze and fire bullets at the opponent’s tank. Tanks and bullets cannot move through walls.
+<br><br>
+<p align="center">
+  <img src="./media/gameloop.png" alt="Game Loop" width="420" height="500">
+  <br>
+  <em>Figure 5: Game Loop.</em>
+</p>
+<br>
+Tank movement is discretized in increments to give the game a familiar feel and aid player movement around and through the block maze. We decided to keep the tank movement speed constant. Holding the arrow key moves the tank continually in the specified direction. When the player presses a different arrow key and the intended spot is vacant, the tank turns in that direction. The Player 1 tank is gold in color and the Player 2 tank is silver. 
+
+Valid player movement is determined through collision detection with both the walls of the maze and the opponent tank. The coordinates of the tank are truncated into a 32 bit value for each x and y direction, yielding a 20x15 grid, and used to determine an overlap between tank and wall or tank and tank and prevent movement through. 
+
+Players can only fire one bullet at a time. The bullet for Player 1 matches the gold color of the Player 1 tank and the bullet for Player 2 matches the silver color for the Player 2 tank. Bullets move faster than tanks and fire in the current direction the tank is facing. Once the bullet hits a wall, it disappears, and the player is able to fire a new bullet. If the bullet hits the opponent’s tank, the tank explodes and the bullet disappears. Bullet collision is detected in the same manner as tank and wall collisions as described above. Separate threads are used for each of the players’ bullets so that the bullets can fire and move simultaneously with the tanks themselves, which are handled by the main thread of the program. 
+
+Successfully shooting the opponent’s tank gives the player 100 points, indicated by the score at the top of the screen. Player 1’s score is on the left side and Player 2’s score is on the right. The first player to land 5 hits on the opponent and score 500 points wins the game, upon which the “gameover” graphic is displayed on top of the maze and the game resets back to the stage selection screen for replay.
+
+# References <a name="references"></a>
+
+[1] http://www.cs.columbia.edu/~sedwards/classes/2023/4840-spring/index.html
+
+[2] https://projectf.io/posts/hardware-sprites/
+
+[3] https://github.com/projf/fpgatools
+
+[4] https://github.com/0x60/385-audio-tools
+
+[5] https://www.cl.cam.ac.uk/teaching/1617/ECAD+Arch/optional-tonegen.html
