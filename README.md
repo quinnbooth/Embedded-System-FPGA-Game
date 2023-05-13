@@ -26,6 +26,7 @@ Multiplayer tank game implemented on the DE1-SoC Cyclone V Board. Based on Battl
 # Table of Contents
 
 - [Introduction](#introduction)
+    - [How to Run](#run)
     - [Game Overview & Rules](#gameoverview)
     - [System Architecture](#architecture)
 - [Hardware](#hardware)
@@ -39,6 +40,33 @@ Multiplayer tank game implemented on the DE1-SoC Cyclone V Board. Based on Battl
 - [References](#references)
 
 # Introduction <a name="introduction"></a>
+
+### How to Run <a name="run"></a>
+
+Boot up a DE1-SoC Cyclone V with an SD card that has Linux installed. Connect the board to a monitor through a VGA cable, headphones to the line-out audio jack, iNNext controllers to two USB ports, the board's power cable, ethernet, and a USB to your computer containing the program files. Make sure your computer is on the same internet as your FPGA.
+
+On your computer, set up a screen terminal emulator to interface with the FPGA's Linux terminal:
+
+$ screen /dev/ttyUSB0 115200
+
+In the screen terminal emulator, connect your FPGA to the internet:
+
+$ ifup eth0
+
+Download linux-headers-4.19.0 and then install & upgrade the following:
+
+$ apt update
+
+$ apt upgrade -y
+
+$ apt install -y gcc make libusb-1.0-0-dev usbutils openssh-client kmod
+
+Mount the boot partition of your SD:
+
+$ mount /dev/mmcblk0p1 /mnt
+
+Use scp to transfer the .rbf and .dtb files in this repo into /mnt. Additionally, use scp to transfer the software folder onto your FPGA's desktop. Reboot the board, make the C programs, and run ./hello.
+<br><br>
 
 ### Game Overview & Rules <a name="gameoverview"></a>
 

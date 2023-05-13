@@ -1,1 +1,3 @@
 *.tcl linguist-vendored
+*.rbf linguist-vendored
+*.dtb linguist-vendored
