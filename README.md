@@ -142,12 +142,10 @@ The userspace program to handle the game logic has three primary loops– 1) loo
 <p align="center">
   <img src="./media/gameloop.png" alt="Game Loop" width="420" height="500">
   <br>
-  <em>Figure 5: Game Loop.</em>
+  <em>Figure 9: Game Loop.</em>
 </p>
 <br>
-Tank movement is discretized in increments to give the game a familiar feel and aid player movement around and through the block maze. We decided to keep the tank movement speed constant. Holding the arrow key moves the tank continually in the specified direction. When the player presses a different arrow key and the intended spot is vacant, the tank turns in that direction. The Player 1 tank is gold in color and the Player 2 tank is silver. 
-
-Valid player movement is determined through collision detection with both the walls of the maze and the opponent tank. The coordinates of the tank are truncated into a 32 bit value for each x and y direction, yielding a 20x15 grid, and used to determine an overlap between tank and wall or tank and tank and prevent movement through. 
+Tank movement is discretized in increments to give the game a familiar feel and aid player movement around and through the block maze. We decided to keep the tank movement speed constant. Holding the arrow key moves the tank continually in the specified direction. When the player presses a different arrow key and the intended spot is vacant, the tank turns in that direction. The Player 1 tank is gold in color and the Player 2 tank is silver. Valid player movement is determined through collision detection with both the walls of the maze and the opponent tank. The coordinates of the tank are truncated into a 32 bit value for each x and y direction, yielding a 20x15 grid, and used to determine an overlap between tank and wall or tank and tank and prevent movement through. 
 
 Players can only fire one bullet at a time. The bullet for Player 1 matches the gold color of the Player 1 tank and the bullet for Player 2 matches the silver color for the Player 2 tank. Bullets move faster than tanks and fire in the current direction the tank is facing. Once the bullet hits a wall, it disappears, and the player is able to fire a new bullet. If the bullet hits the opponent’s tank, the tank explodes and the bullet disappears. Bullet collision is detected in the same manner as tank and wall collisions as described above. Separate threads are used for each of the players’ bullets so that the bullets can fire and move simultaneously with the tanks themselves, which are handled by the main thread of the program. 
 
