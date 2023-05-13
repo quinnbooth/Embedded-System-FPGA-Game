@@ -17,9 +17,9 @@ Multiplayer tank game implemented on the DE1-SoC Cyclone V Board. Based on Battl
 
 👨‍💻 **Quinn Booth** - `qab2004@columbia.edu`
 
-👩‍💻 **Ganesan Narayanan**
+👨‍💻 **Ganesan Narayanan**
 
-👨‍💻 **Ana Maria Rodrigues**
+👩‍💻 **Ana Maria Rodriguez**
 
 👨‍🏫 **Professor Stephen Edwards** - *Code Skeleton* 
 
